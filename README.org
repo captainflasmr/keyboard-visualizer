@@ -1,0 +1,9 @@
+#+title: keyboard-visualizer
+#+author: James Dyer
+#+email: captainflasmr@gmail.com
+#+language: en
+#+options: ':t toc:nil author:nil email:nil num:nil title:nil
+#+todo: TODO DOING | DONE
+#+startup: showall
+
+Showing visually Emacs key-chords
