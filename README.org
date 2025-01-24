@@ -14,6 +14,20 @@
 
 Whether you're a new user learning Emacs keybindings or an advanced user customizing your workflows, =keyboard-visualizer= provides an intuitive way to understand and practice keyboard shortcuts.
 
+** Features
+
+- Visualize keyboard shortcuts with real-time highlighting on a keyboard layout.
+  - Supports single-chord and multi-chord commands.
+  - Displays side-by-side layouts for multi-chord commands.
+- Fuzzy search for commands with natural language queries:
+  - Example: Type "save file", and the package visualizes the `C-x C-s` keybinding.
+- Save keyboard layouts to files for later reference.
+- Randomized practice mode to learn and memorize keybindings.
+- Toggleable "insert mode" to show layouts for recent commands as you type.
+- Highly customizable:
+  - Define custom keyboard layouts.
+  - Full control over displayed faces and styles.
+
 ** Whats New
 
 *** <2025-01-24>
@@ -50,24 +64,10 @@ Enhance keyboard visualizer with learning mode and user interface improvements
   - `keyboard-visualizer-monospace-face` face includes adjustable height.
 - Various refactoring and bug fixes, such as filtering unnecessary characters from key descriptions.
 
-** Features
-
-- Visualize keyboard shortcuts with real-time highlighting on a keyboard layout.
-  - Supports single-chord and multi-chord commands.
-  - Displays side-by-side layouts for multi-chord commands.
-- Fuzzy search for commands with natural language queries:
-  - Example: Type "save file", and the package visualizes the `C-x C-s` keybinding.
-- Save keyboard layouts to files for later reference.
-- Randomized practice mode to learn and memorize keybindings.
-- Toggleable "insert mode" to show layouts for recent commands as you type.
-- Highly customizable:
-  - Define custom keyboard layouts.
-  - Full control over displayed faces and styles.
-
 ** Screenshots
 
-[[file:img/demo-1.png]]
-[[file:img/demo-2.png]]
+[[file:img/demo_001.gif]]
+[[file:img/demo_002.gif]]
 
 ** Installation
 
