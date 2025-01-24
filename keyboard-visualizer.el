@@ -13,12 +13,12 @@
   :group 'help)
 
 (defcustom keyboard-visualizer-layout
-  '(("ESC" "F1" "F2" "F3" "F4" "F5" "F6" "F7" "F8" "F9" "F10" "F11" "F12")
+  '(("ESC" "f1" "f2" "f3" "f4" "f5" "f6" "f7" "f8" "f9" "f10" "f11" "f12")
     ("`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" "DEL")
     ("TAB" "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "[" "]" "\\")
-    ("Caps" "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" "'" "Enter")
+    ("Caps" "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" "'" "RET")
     ("Shift" "z" "x" "c" "v" "b" "n" "m" "," "." "/" "Shift")
-    ("Ctrl" "W" "Alt" " " " " "SPC" " " " " "RAlt" "RCtrl"))
+    ("Ctrl" "Super" "Alt" " " " " "SPC" " " " " "RAlt" "RCtrl"))
   "Keyboard layout representation."
   :type '(repeat (repeat string))
   :group 'keyboard-visualizer)
@@ -34,9 +34,62 @@
   :group 'keyboard-visualizer)
 
 (defface keyboard-visualizer-monospace-face
-  '((t :family "Courier"))
+  '((t :family "Courier" :height 160))
   "Face for monospace text in the *Keyboard Layout* buffer."
   :group 'keyboard-visualizer)
+
+(defcustom keyboard-visualizer-learning-exclude-commands
+  '(self-insert-command 
+    keyboard-quit 
+    keyboard-escape-quit 
+    abort-recursive-edit
+    execute-extended-command
+    keyboard-visualizer-show-command
+    keyboard-visualizer-learning-mode-toggle)
+  "List of commands to exclude from the random function learning mode."
+  :type '(repeat symbol)
+  :group 'keyboard-visualizer)
+
+(defvar keyboard-visualizer-insert-mode nil
+  "Non-nil means `keyboard-visualizer-show-command` is called after every command.")
+
+(defvar keyboard-visualizer-learning-mode nil
+  "Non-nil means being able to step through random commands.")
+
+(defvar keyboard-visualizer-current-command nil
+  "Stores the current command being shown in learning mode.")
+
+(defun keyboard-visualizer--get-commands-with-keychords ()
+  "Retrieve a list of interactive commands that have associated key chords."
+  (let ((commands '()))
+    (mapatoms
+     (lambda (symbol)
+       (when (and (commandp symbol)
+                  (not (memq symbol keyboard-visualizer-learning-exclude-commands))
+                  (keyboard-visualizer--get-key-sequence symbol)) ;; Ensure it has a key chord
+         (push symbol commands)))
+     obarray)
+    commands))
+
+(defun keyboard-visualizer-learning-step ()
+  "Manually step to the next interactive command in learning mode."
+  (interactive)
+  ;; (if keyboard-visualizer-learning-mode
+      (let* ((commands (keyboard-visualizer--get-commands-with-keychords))
+             (random-command (nth (random (length commands)) commands)))
+        (setq keyboard-visualizer-current-command random-command)
+        (keyboard-visualizer-show-command random-command)))
+    ;; (message "Learning mode is not enabled. Enable it first with 'C-c b l'.")))
+
+(defun keyboard-visualizer-learning-show-random-command ()
+  "Show a random interactive command's keybinding."
+  (interactive)
+  (let* ((commands (keyboard-visualizer--get-commands-with-keychords))
+         (random-command (nth (random (length commands)) commands)))
+    (condition-case nil
+        (progn
+          (keyboard-visualizer-show-command random-command)))))
+      ;; (error (message "Could not show keybinding for %s" random-command)))))
 
 (defun keyboard-visualizer--create-buffer ()
   "Create or get the keyboard visualization buffer and set it to use a monospace font."
@@ -57,7 +110,6 @@ Returns a list of keys that should be highlighted for this chord."
          (last-key (car (last parts)))
          (modifiers (butlast parts)))
     (append
-     ;; Convert modifier keys to their keyboard representation
      (mapcar (lambda (mod)
                (cond
                 ((string= mod "C") "Ctrl")
@@ -71,7 +123,7 @@ Returns a list of keys that should be highlighted for this chord."
   "Convert KEY-SEQUENCE to a list of chord lists.
 Each chord list contains the keys to be highlighted for that chord."
   (when key-sequence
-    (let* ((desc (key-description key-sequence))
+    (let* ((desc (replace-regexp-in-string "[<>]" "" (key-description key-sequence)))
            (chords (split-string desc " ")))
       (mapcar #'keyboard-visualizer--break-chord chords))))
 
@@ -100,26 +152,19 @@ Returns a list of strings, one for each row of the layout."
   "Draw multiple keyboard layouts horizontally, one for each chord in CHORD-LISTS."
   (with-current-buffer (keyboard-visualizer--create-buffer)
     (let* ((inhibit-read-only t)
-           ;; Generate all layouts first
            (all-layouts (mapcar #'keyboard-visualizer--draw-single-layout chord-lists))
-           ;; Get the number of rows (should be same for all layouts)
            (num-rows (length (car all-layouts)))
-           ;; Number of spaces between layouts
            (spacing "    "))
-      
       (erase-buffer)
-      (insert (format "%s %s\n\n" (symbol-name command) (key-description sequences)))
-      
-      ;; For each row in the layouts
+      (goto-char (point-min))
+      (insert (format "%s %s\n" (symbol-name command) (key-description sequences)))
       (dotimes (row-idx num-rows)
-        ;; Insert each layout's corresponding row
         (dolist (layout all-layouts)
           (insert (nth row-idx layout))
           (insert spacing))
-        (insert "\n")))
-    
-    (goto-char (point-min))
-    (special-mode)))
+        (insert "\n"))
+        (goto-char (point-min)))))
+        ;; (special-mode))))
 
 ;;;###autoload
 (defun keyboard-visualizer-show-command (command)
@@ -133,11 +178,18 @@ Returns a list of strings, one for each row of the layout."
       (if chord-lists
           (progn
             (keyboard-visualizer--draw-layouts chord-lists command key-sequences)
-            (display-buffer (keyboard-visualizer--create-buffer)))
-        (message "No key binding found for %s" command)))))
-
-(defvar keyboard-visualizer-insert-mode nil
-  "Non-nil means `keyboard-visualizer-show-command` is called after every command.")
+            (with-current-buffer (keyboard-visualizer--create-buffer)
+              (let* ((inhibit-read-only t)
+                     ;; (description-length (window-total-width (get-buffer-window "*Keyboard Layout*")))
+                     (description-length 1000)
+                     (key-sequences (where-is-internal command nil t))
+                     (description (or (replace-regexp-in-string "\n" " " (documentation command)) "No description available")))
+                (goto-char (point-min))
+                (insert (propertize "Description:" 'face 'bold) "\n"
+                        (substring description 0 (min (length description) description-length))
+                        (if (> (length description) description-length) "..." "") "\n")))
+            (display-buffer (keyboard-visualizer--create-buffer)))))))
+        ;; (message "No key binding found for %s" command)))))
 
 (defun keyboard-visualizer--maybe-show-command ()
   "Show the keyboard layout for the last executed command if insert mode is enabled."
@@ -158,15 +210,48 @@ Returns a list of strings, one for each row of the layout."
     (remove-hook 'post-command-hook #'keyboard-visualizer--maybe-show-command)
     (message "Keyboard visualizer insert mode disabled.")))
 
-;; Configure how the keyboard layout buffer is displayed
+;;;###autoload
+(defun keyboard-visualizer-learning-mode-toggle ()
+  "Toggle keyboard learning mode."
+  (interactive)
+  (setq keyboard-visualizer-learning-mode (not keyboard-visualizer-learning-mode))
+  (if keyboard-visualizer-learning-mode
+      (progn
+        (remove-hook 'post-command-hook #'keyboard-visualizer--maybe-show-command)        
+        (message "Keyboard learning mode enabled. Use 'C-c b n' to step manually."))
+    (setq keyboard-visualizer-current-command nil)
+    (message "Keyboard learning mode disabled.")))
+
 (add-to-list 'display-buffer-alist
              '("\\*Keyboard Layout\\*"
                (display-buffer-in-side-window)
                (side . top)
                (slot . 0)
                (window-height . fit-window-to-buffer)
+               ;; (window-height . 10)
                (preserve-size . (nil . t))
                (inhibit-same-window . t)))
+
+(defun keyvis-menu ()
+  "Menu for Shell commands."
+  (interactive)
+  (let ((key (read-key
+              (propertize
+               "--- Keyboard Visualizer Commands [q] Quit: ---
+[b] Keyboard Visualizer Toggle
+[l] Keyboard Visualizer Learning
+[n] Step to Next Command (Learning Mode Only)"
+                'face 'minibuffer-prompt))))
+    (pcase key
+      (?b (call-interactively 'keyboard-visualizer-insert-mode-toggle))
+      (?l (call-interactively 'keyboard-visualizer-learning-mode-toggle))
+      (?n (call-interactively 'keyboard-visualizer-learning-step))
+      (?q (message "Quit Shell menu."))
+      (?\C-g (message "Quit Shell menu."))
+      (_ (message "Invalid key: %c" key)))))
+
+(global-set-key (kbd "C-c b") 'keyvis-menu)
+(global-set-key (kbd "M-c") 'keyboard-visualizer-learning-step)
 
 (provide 'keyboard-visualizer)
 ;;; keyboard-visualizer.el ends here

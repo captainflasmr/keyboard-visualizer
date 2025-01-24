@@ -6,4 +6,53 @@
 #+todo: TODO DOING | DONE
 #+startup: showall
 
-Showing visually Emacs key-chords
+* Introduction
+
+Displays keyboard layouts in a buffer horizontally and highlights keys required for interactive functions.  For multi-chord commands, displays separate keyboard layouts side by side for each chord in the sequence.
+
+* Whats New
+
+** <2025-01-24>
+
+Enhance keyboard visualizer with learning mode and user interface improvements
+
+- Added a new `keyboard-visualizer-learning-mode` to help users learn keybindings via random command prompts.
+- Introduced new commands: 
+  - `keyboard-visualizer-learning-step` for manual stepping through commands.
+  - `keyboard-visualizer-learning-mode-toggle` to enable/disable learning mode.
+  - `keyvis-menu` to provide an interactive menu for visualizer-related actions.
+- Updated the keyboard layout to reflect more accurate key representations (e.g., renamed "RET" and "SPC").
+- Improved documentation display within the keyboard visualizer buffer.
+- Enhanced UI:
+  - Used bold styling for section headers (e.g., "Description:").
+  - Adjusted layout buffer display settings for better usability.
+- Added customization options:
+  - `keyboard-visualizer-learning-exclude-commands` to exclude certain commands from learning mode.
+  - `keyboard-visualizer-monospace-face` face includes adjustable height.
+- Various refactoring and bug fixes, such as filtering unnecessary characters from key descriptions.
+
+* Features
+
+** Visual keyboard layout for Emacs command keybindings
+
+** Automatic command live keyboard update
+
+* Roadmap
+
+** DOING Show random functions and their keybindings for learning
+
+** TODO Step through an Emacs transition tutorial demonstrating the keybindings for the most used functions
+
+** TODO Toggle off layout function keys
+
+** TODO Show description of current function
+
+** TODO Link to keycast?
+
+** TODO Show command bindings at point?
+
+** TODO Transient type menu
+
+** TODO Ergonomic warning
+
+** TODO Allow key-bind definition for ergonomic setup
