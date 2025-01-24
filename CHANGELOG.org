@@ -1,4 +1,4 @@
-#+title: keyboard-visualizer
+#+title: Change log of keyboard-visualizer
 #+author: James Dyer
 #+email: captainflasmr@gmail.com
 #+language: en
@@ -6,11 +6,10 @@
 #+todo: TODO DOING | DONE
 #+startup: showall
 
-* Introduction
+This document contains the release notes for each tagged commit on the
+project's main git repository: [[https://github.com/captainflasmr/keyboard-visualizer]]
 
-Displays keyboard layouts in a buffer horizontally and highlights keys required for interactive functions.  For multi-chord commands, displays separate keyboard layouts side by side for each chord in the sequence.
-
-* Whats New
+* Versions
 
 ** <2025-01-24>
 
@@ -46,22 +45,6 @@ Enhance keyboard visualizer with learning mode and user interface improvements
   - `keyboard-visualizer-monospace-face` face includes adjustable height.
 - Various refactoring and bug fixes, such as filtering unnecessary characters from key descriptions.
 
-* Features
+* Testing
 
-** DONE Visual keyboard layout for Emacs command keybindings
-
-** DONE Automatic command live keyboard update
-
-* Roadmap
-
-** DOING Add transient like menu to activate different functionality
-
-** DOING Show random functions and their keybindings for learning
-
-** DOING Fuzzy search on simple command description for Emacs transition
-
-** DOING Save keybindings that are discovered through random learning
-
-** TODO Warning when keys in visualized command are not ergonomic
-
-** TODO Key visualization to accomodate ergonomic keybinding setup
+Developing locally and running through and evaluating elisp code.
