@@ -6,13 +6,17 @@
 #+todo: TODO DOING | DONE
 #+startup: showall
 
-* Introduction
+* Keyboard Visualizer: Visualize Keyboard Shortcuts for Emacs Commands
 
-Displays keyboard layouts in a buffer horizontally and highlights keys required for interactive functions.  For multi-chord commands, displays separate keyboard layouts side by side for each chord in the sequence.
+** Overview
 
-* Whats New
+=keyboard-visualizer= is an Emacs package that allows users to visualize keyboard shortcuts as key sequences on a keyboard layout. This package can highlight keys for single or multi-chord commands and display side-by-side layouts for all chords in a sequence.
 
-** <2025-01-24>
+Whether you're a new user learning Emacs keybindings or an advanced user customizing your workflows, =keyboard-visualizer= provides an intuitive way to understand and practice keyboard shortcuts.
+
+** Whats New
+
+*** <2025-01-24>
 
 Enhanced with natural language query commands and new features
 
@@ -27,7 +31,7 @@ Enhanced with natural language query commands and new features
   - Added `[s]` for saving the keyboard layout.
   - Removed `[l]` and deprecated learning mode toggle.
 
-** <2025-01-24>
+*** <2025-01-24>
 
 Enhance keyboard visualizer with learning mode and user interface improvements
 
@@ -46,22 +50,154 @@ Enhance keyboard visualizer with learning mode and user interface improvements
   - `keyboard-visualizer-monospace-face` face includes adjustable height.
 - Various refactoring and bug fixes, such as filtering unnecessary characters from key descriptions.
 
-* Features
+** Features
 
-** DONE Visual keyboard layout for Emacs command keybindings
+- Visualize keyboard shortcuts with real-time highlighting on a keyboard layout.
+  - Supports single-chord and multi-chord commands.
+  - Displays side-by-side layouts for multi-chord commands.
+- Fuzzy search for commands with natural language queries:
+  - Example: Type "save file", and the package visualizes the `C-x C-s` keybinding.
+- Save keyboard layouts to files for later reference.
+- Randomized practice mode to learn and memorize keybindings.
+- Toggleable "insert mode" to show layouts for recent commands as you type.
+- Highly customizable:
+  - Define custom keyboard layouts.
+  - Full control over displayed faces and styles.
 
-** DONE Automatic command live keyboard update
+** Screenshots
 
-* Roadmap
+[[file:img/demo-1.png]]
+[[file:img/demo-2.png]]
 
-** DOING Add transient like menu to activate different functionality
+** Installation
 
-** DOING Show random functions and their keybindings for learning
+You can install =keyboard-visualizer= from MELPA (if published) or manually:
 
-** DOING Fuzzy search on simple command description for Emacs transition
+*** Manual Installation
 
-** DOING Save keybindings that are discovered through random learning
+1. Download or clone the repository:
+   
+   #+begin_src sh
+   git clone https://github.com/yourusername/keyboard-visualizer.git
+   #+end_src
+   
+2. Add the directory to your `load-path` and load the package:
+   
+   #+begin_src elisp
+   (add-to-list 'load-path "/path/to/keyboard-visualizer/")
+   (require 'keyboard-visualizer)
+   #+end_src
+   
+** Usage
 
-** TODO Warning when keys in visualized command are not ergonomic
+Once installed, you can start using =keyboard-visualizer= right away. Below are the key commands and features:
 
-** TODO Key visualization to accomodate ergonomic keybinding setup
+| Keybinding                             | Command                                                   | Description |
+|----------------------------------------+-----------------------------------------------------------+-------------|
+| `M-x keyboard-visualizer-show-command` | Visualize a specific command's keybinding.                |             |
+| `C-c b`                                | Open the main menu for interactive commands.              |             |
+| `C-c b j`                              | Fuzzy search for commands by description/query.           |             |
+| `C-c b n`                              | Show a random interactive command's keybinding.           |             |
+| `C-c b s`                              | Save the current keyboard layout to a file.               |             |
+| `C-c b b`                              | Toggle "insert mode" to visualize commands automatically. |             |
+
+*** Visualize a Command
+
+To visualize a specific command:
+
+#+begin_src elisp
+M-x keyboard-visualizer-show-command RET some-command RET
+#+end_src
+
+*** Search Commands by Query
+
+Use fuzzy searching to look up commands:
+
+#+begin_src sh
+C-c b j
+#+end_src
+
+For example, type "undo" and choose the corresponding Emacs command.
+
+*** Enable Insert Mode
+
+Toggle insert mode to see visualizations for your recently executed commands:
+
+#+begin_src sh
+C-c b b
+#+end_src
+
+*** Save Layouts
+
+You can save the current layout to a file and revisit it later:
+
+#+begin_src sh
+C-c b s
+#+end_src
+
+** Configuration
+
+You can customize =keyboard-visualizer= to suit your preferences.
+
+*** Define a Custom Keyboard Layout
+
+You can define a new keyboard layout using =keyboard-visualizer-layout=:
+
+#+begin_src elisp
+(setq keyboard-visualizer-layout
+  '(("ESC" "F1" "F2" ...)
+    ("`" "1" "2" ...)
+    ...))
+#+end_src
+
+*** Natural Language Query Mappings
+
+Add or modify fuzzy search mappings with =keyboard-visualizer-query-command-map=:
+
+#+begin_src elisp
+(add-to-list 'keyboard-visualizer-query-command-map
+             '("my custom command" . my-custom-command))
+#+end_src
+
+*** Faces and Appearance
+
+Customize the appearance of normal and highlighted keys:
+
+#+begin_src elisp
+(set-face-attribute 'keyboard-visualizer-key-face nil :box '(:line-width 1))
+(set-face-attribute 'keyboard-visualizer-highlight-face nil :box '(:line-width 2 :color "red"))
+#+end_src
+
+** Roadmap
+
+*** DOING Add transient like menu to activate different functionality
+
+*** DOING Show random functions and their keybindings for learning
+
+*** DOING Fuzzy search on simple command description for Emacs transition
+
+*** DOING Save keybindings that are discovered through random learning
+
+*** TODO Warning when keys in visualized command are not ergonomic
+
+*** TODO Key visualization to accomodate ergonomic keybinding setup
+
+** Contribution
+
+We welcome contributions! Here's how you can get started:
+
+1. Fork the repository and create a new branch for your changes.
+2. Ensure your code adheres to Emacs Lisp conventions.
+3. Add tests or documentation for new features.
+4. Submit a pull request with a detailed description.
+
+** Acknowledgments
+
+Special thanks to the Emacs community for inspiration and support.
+
+** Feedback
+
+Have questions, suggestions, or issues? Feel free to open a GitHub issue or reach out to us through the repository.
+
+GitHub Repository: [[https://github.com/yourusername/keyboard-visualizer][keyboard-visualizer]]
+
