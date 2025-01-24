@@ -14,6 +14,11 @@
 
 Whether you're a new user learning Emacs keybindings or an advanced user customizing your workflows, =keyboard-visualizer= provides an intuitive way to understand and practice keyboard shortcuts.
 
+** Screenshots
+
+[[file:img/demo_001.gif]]
+[[file:img/demo_002.gif]]
+
 ** Features
 
 - Visualize keyboard shortcuts with real-time highlighting on a keyboard layout.
@@ -63,11 +68,6 @@ Enhance keyboard visualizer with learning mode and user interface improvements
   - `keyboard-visualizer-learning-exclude-commands` to exclude certain commands from learning mode.
   - `keyboard-visualizer-monospace-face` face includes adjustable height.
 - Various refactoring and bug fixes, such as filtering unnecessary characters from key descriptions.
-
-** Screenshots
-
-[[file:img/demo_001.gif]]
-[[file:img/demo_002.gif]]
 
 ** Installation
 
