@@ -11,6 +11,16 @@ project's main git repository: [[https://github.com/captainflasmr/keyboard-visua
 
 * Versions
 
+** <2025-01-26>
+
+Added ergonomic indicator
+
+- Enhanced `keyboard-visualizer--draw-single-layout` to optionally highlight non-ergonomic key combinations based on chord-side alignment.
+- Added `keyboard-visualizer--key-side` helper function to determine if a key belongs to the left or right side of the keyboard layout.
+- Implemented `keyboard-visualizer-ergonomic-indicator-toggle` to allow toggling ergonomic highlighting via user interaction.
+- Added a new customizable variable `keyboard-visualizer-ergonomic-indicator` to manage the state of the ergonomic indicator.
+- Updated the interactive command menu to include the ergonomic indicator toggle `[e]`.
+
 ** <2025-01-24>
 
 Enhanced with natural language query commands and new features

@@ -14,6 +14,11 @@
   "Visualize keyboard shortcuts on a keyboard layout."
   :group 'help)
 
+(defface keyboard-visualizer-non-ergonomic-face
+  '((t :inherit bold :background "#ff0000" :foreground "#ffffff"))
+  "Face for non-ergonomic key combinations." 
+  :group 'keyboard-visualizer)
+
 (defcustom keyboard-visualizer-layout
   '(("ESC" "f1" "f2" "f3" "f4" "f5" "f6" "f7" "f8" "f9" "f10" "f11" "f12")
     ("`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" "DEL")
@@ -24,6 +29,22 @@
   "Keyboard layout representation."
   :type '(repeat (repeat string))
   :group 'keyboard-visualizer)
+
+(defun keyboard-visualizer--key-side (key)
+  "Determine the side of the keyboard for a given KEY.
+Returns 'left or 'right based on the key's position in the layout."
+  (let ((left-side '("ESC" "`" "TAB" "Caps" "Shift" "Ctrl" 
+                     "q" "w" "e" "r" "t" "a" "s" "d" "f" "g" 
+                     "z" "x" "c" "v" "b"))
+        (right-side '("f1" "f2" "f3" "f4" "f5" "f6" "f7" "f8" "f9" "f10" "f11" "f12"
+                      "7" "8" "9" "0" "-" "=" "DEL"
+                      "y" "u" "i" "o" "p" "[" "]" "\\"
+                      "h" "j" "k" "l" ";" "'" "RET"
+                      "n" "m" "," "." "/" "Shift" "RCtrl")))
+    (cond 
+     ((member key left-side) 'left)
+     ((member key right-side) 'right)
+     (t nil))))
 
 (defcustom keyboard-visualizer-query-command-map
   '(;; File operations
@@ -114,6 +135,9 @@
 (defvar keyboard-visualizer-insert-mode nil
   "Non-nil means `keyboard-visualizer-show-command` is called after every command.")
 
+(defvar keyboard-visualizer-ergonomic-indicator nil
+  "Non-nil means to display an extra colour highlight for those bad for your fingers.")
+
 (defun keyboard-visualizer-save-layout ()
   "Append the current contents of the *Keyboard Layout* buffer to a file and visit the file in a buffer."
   (interactive)
@@ -183,24 +207,30 @@
           (split-string
            (replace-regexp-in-string "[<>]" "" (key-description key-sequence)) " ")))
 
-(defun keyboard-visualizer--draw-single-layout (chord-keys)
+(defun keyboard-visualizer--draw-single-layout (chord-keys &optional highlight-non-ergonomic)
   "Draw a single keyboard layout with CHORD-KEYS highlighted.
+If HIGHLIGHT-NON-ERGONOMIC is non-nil, highlight chords on the same side.
 Returns a list of strings, one for each row of the layout."
-  (let ((layout-rows nil))
+  (let ((layout-rows nil)
+        (chord-sides (mapcar #'keyboard-visualizer--key-side chord-keys)))
     (dolist (row keyboard-visualizer-layout)
       (let ((row-str ""))
         (dolist (key row)
-          (let ((highlighted (cl-some (lambda (highlight)
-                                        (string-match-p
-                                         (concat "^" (regexp-quote highlight) "$")
-                                         key))
-                                      chord-keys)))
+          (let* ((highlighted (cl-some (lambda (highlight)
+                                         (string-match-p
+                                          (concat "^" (regexp-quote highlight) "$")
+                                          key))
+                                       chord-keys))
+                 (non-ergonomic (and highlight-non-ergonomic
+                                     highlighted
+                                     (> (length chord-sides) 1)
+                                     (apply #'eq chord-sides))))
             (setq row-str
                   (concat row-str
                           (propertize (format "%2s " key)
-                                      'face (if highlighted
-                                                'keyboard-visualizer-highlight-face
-                                              'keyboard-visualizer-key-face))))))
+                                      'face (cond (non-ergonomic 'keyboard-visualizer-non-ergonomic-face)
+                                                  (highlighted 'keyboard-visualizer-highlight-face)
+                                                  (t 'keyboard-visualizer-key-face)))))))
         (push row-str layout-rows)))
     (nreverse layout-rows)))
 
@@ -208,7 +238,10 @@ Returns a list of strings, one for each row of the layout."
   "Draw multiple keyboard layouts horizontally, one for each chord in CHORD-LISTS."
   (with-current-buffer (keyboard-visualizer--create-buffer)
     (let* ((inhibit-read-only t)
-           (all-layouts (mapcar #'keyboard-visualizer--draw-single-layout chord-lists))
+           (all-layouts (mapcar
+                         (lambda (chord)
+                           (keyboard-visualizer--draw-single-layout chord keyboard-visualizer-ergonomic-indicator))
+                         chord-lists))
            (num-rows (length (car all-layouts)))
            (spacing "    "))
       (erase-buffer)
@@ -264,6 +297,11 @@ Returns a list of strings, one for each row of the layout."
     (remove-hook 'post-command-hook #'keyboard-visualizer--maybe-show-command)
     (message "Keyboard visualizer insert mode disabled.")))
 
+(defun keyboard-visualizer-ergonomic-indicator-toggle ()
+  "Toggle keyboard ergomic indicator."
+  (interactive)
+  (setq keyboard-visualizer-ergonomic-indicator (not keyboard-visualizer-ergonomic-indicator)))
+
 (add-to-list 'display-buffer-alist
              '("\\*Keyboard Layout\\*"
                (display-buffer-in-side-window)
@@ -280,12 +318,14 @@ Returns a list of strings, one for each row of the layout."
   (let ((key (read-key
               (propertize
                "--- Keyboard Visualizer Commands [q] Quit: ---
+[e] Ergnomic Indicator
 [j] Fuzzy Search for Command
 [b] Keyboard Visualizer Toggle
 [n] Step to Random Next Command
 [s] Save Current Keyboard Layout"
                'face 'minibuffer-prompt))))
     (pcase key
+      (?e (keyboard-visualizer-ergonomic-indicator-toggle))
       (?j (call-interactively 'keyboard-visualizer-learn-command-by-query))
       (?b (call-interactively 'keyboard-visualizer-insert-mode-toggle))
       (?n (call-interactively 'keyboard-visualizer-learning-step))
