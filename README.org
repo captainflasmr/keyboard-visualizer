@@ -14,7 +14,7 @@ Whether you're a new user learning Emacs keybindings or an advanced user customi
 
 * Potential names
 
-Not sure I am completely happy with the name of keyboard-visualizer it is a bit humdrum I want something that is a little more memorable, the ideas are :
+Not sure I'm completely happy with the name "keyboard-visualizer." It seems a bit mundane. I'd like something a bit more memorable. The ideas are...
 
 - KeyViz - Short and catchy, indicating "Key Visualization."
 - ChordView - Emphasizes the multi-chord visualization aspect.
