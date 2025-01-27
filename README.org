@@ -12,6 +12,15 @@
 
 Whether you're a new user learning Emacs keybindings or an advanced user customizing your workflows, =keyboard-visualizer= provides an intuitive way to understand and practice keyboard shortcuts.
 
+* Potential names
+
+Not sure I am completely happy with the name of keyboard-visualizer it is a bit humdrum I want something that is a little more memorable, the ideas are :
+
+- KeyViz - Short and catchy, indicating "Key Visualization."
+- ChordView - Emphasizes the multi-chord visualization aspect.
+
+I inclination is for KeyViz.
+
 * Screenshots
 
 [[file:img/demo_001.gif]]
@@ -110,13 +119,13 @@ Here is a kanban of the features that will be (hopefully) added in due cours, an
 #+end_src
 
 #+RESULTS:
-| TODO                                                       | DOING                                                           |
-|------------------------------------------------------------+-----------------------------------------------------------------|
-| Key visualization to accomodate ergonomic keybinding setup | Add transient like menu to activate different functionality     |
-|                                                            | Show random functions and their keybindings for learning        |
-|                                                            | Fuzzy search on simple command description for Emacs transition |
-|                                                            | Save keybindings that are discovered through random learning    |
-|                                                            | Warning when keys in visualized command are not ergonomic       |
+| DOING                                                           | DONE                                                        |
+|-----------------------------------------------------------------+-------------------------------------------------------------|
+| Show random functions and their keybindings for learning        | Add transient like menu to activate different functionality |
+| Fuzzy search on simple command description for Emacs transition |                                                             |
+| Save keybindings that are discovered through random learning    |                                                             |
+| Warning when keys in visualized command are not ergonomic       |                                                             |
+| Key visualization to accomodate ergonomic keybinding setup      |                                                             |
 
 * Installation
 
@@ -161,6 +170,13 @@ You can install =keyboard-visualizer= from MELPA (if published) or manually:
 #+end_src
 
 #+RESULTS:
+| Custom variable                         | Description                                                             |
+|-----------------------------------------+-------------------------------------------------------------------------|
+| keyboard-visualizer-query-command-map   | Mapping of natural language queries to Emacs commands.                  |
+| keyboard-visualizer-show-documentation  | When non-nil, show command documentation in the keyboard layout buffer. |
+| keyboard-visualizer-layout              | Keyboard layout.                                                        |
+| keyboard-visualizer-ergonomic-indicator |                                                                         |
+| keyboard-visualizer-insert-mode         |                                                                         |
 
 * Usage
 
@@ -253,7 +269,7 @@ Customize the appearance of normal and highlighted keys:
 
 * Roadmap                                                           :roadmap:
 
-** DOING Add transient like menu to activate different functionality
+** DONE Add transient like menu to activate different functionality
 
 ** DOING Show random functions and their keybindings for learning
 
@@ -263,7 +279,7 @@ Customize the appearance of normal and highlighted keys:
 
 ** DOING Warning when keys in visualized command are not ergonomic
 
-** TODO Key visualization to accomodate ergonomic keybinding setup
+** DOING Key visualization to accomodate ergonomic keybinding setup
 
 * Issues                                                             :issues:
 
