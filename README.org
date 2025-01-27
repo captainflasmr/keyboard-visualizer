@@ -19,7 +19,7 @@ Not sure I'm completely happy with the name "keyboard-visualizer." It seems a bi
 - KeyViz - Short and catchy, indicating "Key Visualization."
 - ChordView - Emphasizes the multi-chord visualization aspect.
 
-I inclination is for KeyViz.
+My current inclination is for KeyViz.
 
 * Screenshots
 
