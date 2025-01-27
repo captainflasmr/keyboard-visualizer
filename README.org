@@ -33,6 +33,30 @@ Whether you're a new user learning Emacs keybindings or an advanced user customi
 
 * Whats New
 
+** <2025-01-27>
+
+A major refactor and some functional improvements
+
+*Functionality Improvements:*
+- Simplified and optimized keyside determination with `keyboard-visualizer--key-sides`.
+
+*User Interaction:*
+- Enhanced `keyboard-visualizer-menu` with clearer navigation:
+  - Toggle ergonomic indicators, documentation display, and visualizer mode.
+  - Explore commands via fuzzy search (`keyboard-visualizer-learn-command-by-query`) or random steps (`keyboard-visualizer-learning-step`).
+  - Save the current layout with a dedicated option.
+- Added `keyboard-visualizer-documentation-toggle` to enable/disable displaying command documentation.
+
+*Refactoring:*
+- Consolidated and streamlined redundant functions for simplicity and readability.
+- Improved buffer management for visualizer output:
+  - Handles layout buffer cleanup when disabling.
+  - Ensures exclusive usage of the visualizer buffer.
+
+*Keybindings:*
+- Updated keybindings:
+  - `C-c b` for opening `keyboard-visualizer-menu`.
+
 ** <2025-01-26>
 
 Added ergonomic indicator

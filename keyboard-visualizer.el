@@ -1,4 +1,4 @@
-;;; keyboard-visualizer.el --- Visualize keyboard shortcuts for commands -*- lexical-binding: t -*-
+;;; keyboard-visualizer.el --- Visualize keyboard shortcuts -*- lexical-binding: t -*-
 
 ;;; Commentary:
 ;;
@@ -10,14 +10,19 @@
 
 (require 'cl-lib)
 
-(defgroup keyboard-visualizer nil
-  "Visualize keyboard shortcuts on a keyboard layout."
-  :group 'help)
+(defgroup keyboard-visualizer nil "Visualize keyboard shortcuts." :group 'help)
 
-(defface keyboard-visualizer-non-ergonomic-face
-  '((t :inherit bold :background "#ff0000" :foreground "#ffffff"))
-  "Face for non-ergonomic key combinations." 
-  :group 'keyboard-visualizer)
+(defface keyboard-visualizer-non-ergonomic-face '((t :inherit bold :background "#ff0000" :foreground "#ffffff"))
+  "Face for non-ergonomic combinations." :group 'keyboard-visualizer)
+
+(defface keyboard-visualizer-key-face '((t :inherit default :box (:line-width 1 :style released-button)))
+  "Normal key face." :group 'keyboard-visualizer)
+
+(defface keyboard-visualizer-highlight-face '((t :inherit highlight :box (:line-width 1 :style released-button)))
+  "Highlighted key face." :group 'keyboard-visualizer)
+
+(defface keyboard-visualizer-monospace-face '((t :family "Courier" :height 100))
+  "Monospace face." :group 'keyboard-visualizer)
 
 (defcustom keyboard-visualizer-layout
   '(("ESC" "f1" "f2" "f3" "f4" "f5" "f6" "f7" "f8" "f9" "f10" "f11" "f12")
@@ -26,33 +31,27 @@
     ("Caps" "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" "'" "RET")
     ("Shift" "z" "x" "c" "v" "b" "n" "m" "," "." "/" "Shift")
     ("Ctrl" "Super" "Alt" " " " " "SPC" " " " " "RAlt" "RCtrl"))
-  "Keyboard layout representation."
-  :type '(repeat (repeat string))
-  :group 'keyboard-visualizer)
+  "Keyboard layout." :type '(repeat (repeat string)) :group 'keyboard-visualizer)
 
-(defun keyboard-visualizer--key-side (key)
-  "Determine the side of the keyboard for a given KEY.
-Returns 'left or 'right based on the key's position in the layout."
-  (let ((left-side '("ESC" "`" "TAB" "Caps" "Shift" "Ctrl" 
-                     "q" "w" "e" "r" "t" "a" "s" "d" "f" "g" 
-                     "z" "x" "c" "v" "b"))
-        (right-side '("f1" "f2" "f3" "f4" "f5" "f6" "f7" "f8" "f9" "f10" "f11" "f12"
-                      "7" "8" "9" "0" "-" "=" "DEL"
-                      "y" "u" "i" "o" "p" "[" "]" "\\"
-                      "h" "j" "k" "l" ";" "'" "RET"
-                      "n" "m" "," "." "/" "Shift" "RCtrl")))
-    (cond 
-     ((member key left-side) 'left)
-     ((member key right-side) 'right)
-     (t nil))))
+(defvar keyboard-visualizer-insert-mode nil)
+(defvar keyboard-visualizer-ergonomic-indicator nil)
+(defvar keyboard-visualizer-show-documentation nil
+  "When non-nil, show command documentation in the keyboard layout buffer.")
+
+(defconst keyboard-visualizer--key-sides
+  (let ((left '("ESC" "`" "TAB" "Caps" "Shift" "Ctrl" "q" "w" "e" "r" "t" "a" "s" "d" "f" "g" "z" "x" "c" "v" "b"))
+        (right '("f1" "f2" "f3" "f4" "f5" "f6" "f7" "f8" "f9" "f10" "f11" "f12" "7" "8" "9" "0" "-" "=" "DEL"
+                 "y" "u" "i" "o" "p" "[" "]" "\\" "h" "j" "k" "l" ";" "'" "RET" "n" "m" "," "." "/" "Shift" "RCtrl")))
+    (append (mapcar (lambda (k) (cons k 'left)) left)
+            (mapcar (lambda (k) (cons k 'right)) right))))
 
 (defcustom keyboard-visualizer-query-command-map
-  '(;; File operations
+  '(
+    ;; File operations
     ("open file" . find-file)
     ("save file" . save-buffer)
     ("revert/restore file" . revert-buffer)
     ("rename file" . rename-buffer)
-
     ;; Editing
     ("undo" . undo)
     ("cut" . kill-region)
@@ -63,7 +62,6 @@ Returns 'left or 'right based on the key's position in the layout."
     ("delete word" . backward-kill-word)
     ("transpose words" . transpose-words)
     ("transpose lines" . transpose-lines)
-
     ;; Navigation
     ("search" . isearch-forward)
     ("search backward" . isearch-backward)
@@ -77,13 +75,11 @@ Returns 'left or 'right based on the key's position in the layout."
     ("backward word" . backward-word)
     ("scroll up" . scroll-up-command)
     ("scroll down" . scroll-down-command)
-
     ;; Buffers
     ("next buffer" . next-buffer)
     ("previous buffer" . previous-buffer)
     ("switch buffer" . switch-to-buffer)
     ("save buffer" . save-buffer)
-
     ;; Windows
     ("split window horizontally" . split-window-right)
     ("split window vertically" . split-window-below)
@@ -92,51 +88,25 @@ Returns 'left or 'right based on the key's position in the layout."
     ("switch window" . other-window)
     ("resize window" . enlarge-window)
     ("balance windows" . balance-windows)
-
     ;; Dired (File Explorer)
     ("open directory" . dired)
-
     ;; Frames
     ("new frame" . make-frame-command)
     ("delete frame" . delete-frame)
     ("next frame" . other-frame)
-
     ;; Macros
     ("start macro" . kmacro-start-macro)
     ("end macro" . kmacro-end-macro)
     ("play macro" . kmacro-end-and-call-macro)
-
     ;; Help
     ("describe shortcuts" . describe-key)
     ("list shortcuts" . describe-bindings)
-
     ;; Emacs Meta
     ("execute command" . execute-extended-command)
-    ("quit emacs" . save-buffers-kill-terminal)
-    )
-
+    ("quit emacs" . save-buffers-kill-terminal))
   "Mapping of natural language queries to Emacs commands."
   :type '(alist :key-type string :value-type symbol)
   :group 'keyboard-visualizer)
-
-(defface keyboard-visualizer-key-face
-  '((t :inherit default :box (:line-width 1 :style released-button)))
-  "Face for normal keys." :group 'keyboard-visualizer)
-
-(defface keyboard-visualizer-highlight-face
-  '((t :inherit highlight :box (:line-width 1 :style released-button)))
-  "Face for highlighted keys." :group 'keyboard-visualizer)
-
-(defface keyboard-visualizer-monospace-face
-  '((t :family "Courier" :height 100))
-  "Face for monospace text in the *Keyboard Layout* buffer."
-  :group 'keyboard-visualizer)
-
-(defvar keyboard-visualizer-insert-mode nil
-  "Non-nil means `keyboard-visualizer-show-command` is called after every command.")
-
-(defvar keyboard-visualizer-ergonomic-indicator nil
-  "Non-nil means to display an extra colour highlight for those bad for your fingers.")
 
 (defun keyboard-visualizer-save-layout ()
   "Append the current contents of the *Keyboard Layout* buffer to a file and visit the file in a buffer."
@@ -150,157 +120,98 @@ Returns 'left or 'right based on the key's position in the layout."
         (message "Appended *Keyboard Layout* to %s" file)
         (find-file file)))))
 
+(defun keyboard-visualizer--create-buffer ()
+  (let ((buf (get-buffer-create "*Keyboard Layout*")))
+    (with-current-buffer buf
+      (buffer-face-set 'keyboard-visualizer-monospace-face)
+      (setq-local face-remapping-alist '((default keyboard-visualizer-monospace-face))))
+    buf))
+
+(defun keyboard-visualizer--break-chord (chord)
+  (mapcar (lambda (mod) (pcase mod ("C" "Ctrl") ("M" "Alt") ("S" "Shift") (_ mod)))
+          (split-string chord "-")))
+
+(defun keyboard-visualizer--key-sequence-to-chords (key-sequence)
+  (mapcar #'keyboard-visualizer--break-chord
+          (split-string (replace-regexp-in-string "[<>]" "" (key-description key-sequence)) " ")))
+
+(defun keyboard-visualizer--draw-single-layout (chord-keys &optional highlight-non-ergonomic)
+  (let* ((chord-sides (mapcar (lambda (k) (cdr (assoc k keyboard-visualizer--key-sides))) chord-keys))
+         (layout-rows
+          (mapcar
+           (lambda (row)
+             (mapconcat
+              (lambda (key)
+                (let* ((highlighted (member key chord-keys))
+                       (non-ergonomic (and highlight-non-ergonomic highlighted
+                                           (> (length chord-sides) 1)
+                                           (apply #'eq chord-sides))))
+                  (propertize (format "%2s " key)
+                              'face (cond (non-ergonomic 'keyboard-visualizer-non-ergonomic-face)
+                                          (highlighted 'keyboard-visualizer-highlight-face)
+                                          (t 'keyboard-visualizer-key-face)))))
+              row ""))
+           keyboard-visualizer-layout)))
+    layout-rows))
+
+(defun keyboard-visualizer-show-command (command)
+  (interactive "CCommand: ")
+  (when (commandp command)
+    (when-let* ((key-sequences (where-is-internal command nil t))
+                (chord-lists (keyboard-visualizer--key-sequence-to-chords key-sequences)))
+      (with-current-buffer (keyboard-visualizer--create-buffer)
+        (let ((inhibit-read-only t))
+          (erase-buffer)
+          (insert (format "%s %s\n" command (key-description key-sequences)))
+          (let ((all-layouts (mapcar
+                              (lambda (chord)
+                                (keyboard-visualizer--draw-single-layout chord keyboard-visualizer-ergonomic-indicator))
+                              chord-lists)))
+            (dotimes (row-idx (length (car all-layouts)))
+              (dolist (layout all-layouts)
+                (insert (nth row-idx layout) "    "))
+              (insert "\n")))
+          (when keyboard-visualizer-show-documentation
+            (insert "\nDescription:\n" (or (documentation command) "No description available"))))
+        (display-buffer (current-buffer))))))
+
+(defun keyboard-visualizer--maybe-show-command ()
+  (when (and keyboard-visualizer-insert-mode (symbolp this-command) (commandp this-command))
+    (keyboard-visualizer-show-command this-command)))
+
+(defun keyboard-visualizer-documentation-toggle ()
+  "Toggle display of command documentation."
+  (interactive)
+  (setq keyboard-visualizer-show-documentation (not keyboard-visualizer-show-documentation))
+  (message "Command documentation display %s"
+           (if keyboard-visualizer-show-documentation "enabled" "disabled")))
+
+(defun keyboard-visualizer-insert-mode-toggle ()
+  (interactive)
+  (setq keyboard-visualizer-insert-mode (not keyboard-visualizer-insert-mode))
+  (if keyboard-visualizer-insert-mode
+      (add-hook 'post-command-hook #'keyboard-visualizer--maybe-show-command)
+    (progn
+      (remove-hook 'post-command-hook #'keyboard-visualizer--maybe-show-command)
+      (when-let ((window (get-buffer-window "*Keyboard Layout*")))
+        (delete-window window))
+      (when-let ((buffer (get-buffer "*Keyboard Layout*")))
+        (kill-buffer buffer))))
+  (message "Keyboard visualizer insert mode %s." (if keyboard-visualizer-insert-mode "enabled" "disabled")))
+
 (defun keyboard-visualizer-learn-command-by-query ()
-  "Prompt user for a command via query and visualize its keybinding."
   (interactive)
   (if-let* ((query (completing-read "Search for command: " (mapcar #'car keyboard-visualizer-query-command-map)))
             (command (cdr (assoc query keyboard-visualizer-query-command-map))))
       (keyboard-visualizer-show-command command)
     (message "Command not found.")))
 
-(defun keyboard-visualizer--get-commands-with-keychords ()
-  "Retrieve a list of interactive commands that have associated key chords."
-  (let ((commands '()))
-    (mapatoms
-     (lambda (symbol)
-       (when (and (commandp symbol)
-                  (keyboard-visualizer--get-key-sequence symbol)) ;; Ensure it has a key chord
-         (push symbol commands)))
-     obarray)
-    commands))
-
 (defun keyboard-visualizer-learning-step ()
-  "Manually step to the next interactive command in learning mode."
   (interactive)
-  (let* ((commands (keyboard-visualizer--get-commands-with-keychords))
-         (random-command (nth (random (length commands)) commands)))
-    (keyboard-visualizer-show-command random-command)))
-
-(defun keyboard-visualizer-learning-show-random-command ()
-  "Show a random interactive command's keybinding."
-  (interactive)
-  (let* ((commands (keyboard-visualizer--get-commands-with-keychords))
-         (random-command (nth (random (length commands)) commands)))
-    (keyboard-visualizer-show-command random-command)))
-
-(defun keyboard-visualizer--create-buffer ()
-  "Create or get the keyboard visualization buffer and set it to use a monospace font."
-  (let ((buffer (get-buffer-create "*Keyboard Layout*")))
-    (with-current-buffer buffer
-      (buffer-face-set 'keyboard-visualizer-monospace-face)
-      (setq-local face-remapping-alist '((default keyboard-visualizer-monospace-face))))
-    buffer))
-
-(defun keyboard-visualizer--get-key-sequence (command)
-  "Return key sequence for COMMAND or nil if none exists."
-  (where-is-internal command nil t))
-
-(defun keyboard-visualizer--break-chord (chord)
-  "Break a key CHORD (e.g., \"C-x\") into individual keys."
-  (mapcar (lambda (mod)
-            (pcase mod ("C" "Ctrl") ("M" "Alt") ("S" "Shift") (_ mod)))
-          (split-string chord "-")))
-
-(defun keyboard-visualizer--key-sequence-to-chords (key-sequence)
-  "Convert KEY-SEQUENCE to a list of chord lists."
-  (mapcar #'keyboard-visualizer--break-chord
-          (split-string
-           (replace-regexp-in-string "[<>]" "" (key-description key-sequence)) " ")))
-
-(defun keyboard-visualizer--draw-single-layout (chord-keys &optional highlight-non-ergonomic)
-  "Draw a single keyboard layout with CHORD-KEYS highlighted.
-If HIGHLIGHT-NON-ERGONOMIC is non-nil, highlight chords on the same side.
-Returns a list of strings, one for each row of the layout."
-  (let ((layout-rows nil)
-        (chord-sides (mapcar #'keyboard-visualizer--key-side chord-keys)))
-    (dolist (row keyboard-visualizer-layout)
-      (let ((row-str ""))
-        (dolist (key row)
-          (let* ((highlighted (cl-some (lambda (highlight)
-                                         (string-match-p
-                                          (concat "^" (regexp-quote highlight) "$")
-                                          key))
-                                       chord-keys))
-                 (non-ergonomic (and highlight-non-ergonomic
-                                     highlighted
-                                     (> (length chord-sides) 1)
-                                     (apply #'eq chord-sides))))
-            (setq row-str
-                  (concat row-str
-                          (propertize (format "%2s " key)
-                                      'face (cond (non-ergonomic 'keyboard-visualizer-non-ergonomic-face)
-                                                  (highlighted 'keyboard-visualizer-highlight-face)
-                                                  (t 'keyboard-visualizer-key-face)))))))
-        (push row-str layout-rows)))
-    (nreverse layout-rows)))
-
-(defun keyboard-visualizer--draw-layouts (chord-lists command sequences)
-  "Draw multiple keyboard layouts horizontally, one for each chord in CHORD-LISTS."
-  (with-current-buffer (keyboard-visualizer--create-buffer)
-    (let* ((inhibit-read-only t)
-           (all-layouts (mapcar
-                         (lambda (chord)
-                           (keyboard-visualizer--draw-single-layout chord keyboard-visualizer-ergonomic-indicator))
-                         chord-lists))
-           (num-rows (length (car all-layouts)))
-           (spacing "    "))
-      (erase-buffer)
-      (goto-char (point-min))
-      (insert (format "%s %s\n" (symbol-name command) (key-description sequences)))
-      (dotimes (row-idx num-rows)
-        (dolist (layout all-layouts)
-          (insert (nth row-idx layout))
-          (insert spacing))
-        (insert "\n"))
-      (goto-char (point-min)))))
-
-;;;###autoload
-(defun keyboard-visualizer-show-command (command)
-  "Show the keyboard layouts with keys highlighted for each chord in COMMAND."
-  (interactive "CCommand: ")
-  (if (not (commandp command))
-      (message "Invalid command: %s" command)
-    (let* ((key-sequences (keyboard-visualizer--get-key-sequence command))
-           (chord-lists (and key-sequences
-                             (keyboard-visualizer--key-sequence-to-chords key-sequences))))
-      (if chord-lists
-          (progn
-            (keyboard-visualizer--draw-layouts chord-lists command key-sequences)
-            (with-current-buffer (keyboard-visualizer--create-buffer)
-              (let* ((inhibit-read-only t)
-                     ;; (description-length (window-total-width (get-buffer-window "*Keyboard Layout*")))
-                     (description-length 1000)
-                     (key-sequences (where-is-internal command nil t))
-                     (description (or (replace-regexp-in-string "\n" " " (documentation command)) "No description available")))
-                (goto-char (point-min))
-                (insert (propertize "Description:" 'face 'bold) "\n"
-                        (substring description 0 (min (length description) description-length))
-                        (if (> (length description) description-length) "..." "") "\n")))
-            (display-buffer (keyboard-visualizer--create-buffer)))))))
-
-(defun keyboard-visualizer--maybe-show-command ()
-  "Show the keyboard layout for the last executed command if insert mode is enabled."
-  (when (and keyboard-visualizer-insert-mode
-             (symbolp this-command)
-             (commandp this-command))
-    (keyboard-visualizer-show-command this-command)))
-
-;;;###autoload
-(defun keyboard-visualizer-insert-mode-toggle ()
-  "Toggle keyboard visualizer insert mode."
-  (interactive)
-  (setq keyboard-visualizer-insert-mode (not keyboard-visualizer-insert-mode))
-  (if keyboard-visualizer-insert-mode
-      (progn
-        (add-hook 'post-command-hook #'keyboard-visualizer--maybe-show-command)
-        (message "Keyboard visualizer insert mode enabled."))
-    (remove-hook 'post-command-hook #'keyboard-visualizer--maybe-show-command)
-    (message "Keyboard visualizer insert mode disabled.")))
-
-(defun keyboard-visualizer-ergonomic-indicator-toggle ()
-  "Toggle keyboard ergomic indicator."
-  (interactive)
-  (setq keyboard-visualizer-ergonomic-indicator (not keyboard-visualizer-ergonomic-indicator)))
+  (let* ((commands (cl-remove-if-not (lambda (sym) (and (commandp sym) (where-is-internal sym nil t)))
+                                     (mapcar #'intern (all-completions "" obarray))))
+         (command (nth (random (length commands)) commands)))
+    (keyboard-visualizer-show-command command)))
 
 (add-to-list 'display-buffer-alist
              '("\\*Keyboard Layout\\*"
@@ -308,34 +219,30 @@ Returns a list of strings, one for each row of the layout."
                (side . top)
                (slot . 0)
                (window-height . fit-window-to-buffer)
-               ;; (window-height . 10)
                (preserve-size . (nil . t))
                (inhibit-same-window . t)))
 
-(defun keyvis-menu ()
+(defun keyboard-visualizer-menu ()
   "Menu for Shell commands."
   (interactive)
   (let ((key (read-key
               (propertize
-               "--- Keyboard Visualizer Commands [q] Quit: ---
-[e] Ergnomic Indicator
-[j] Fuzzy Search for Command
-[b] Keyboard Visualizer Toggle
-[n] Step to Random Next Command
-[s] Save Current Keyboard Layout"
+               "--------- Keyboard Visualizer Commands [q] Quit: -------
+Toggle -> [b] Visualizer [d] Documentation [e] Ergonomic
+Explore-> [f] Simple     [n] Random
+Save   -> [s] Current"
                'face 'minibuffer-prompt))))
     (pcase key
-      (?e (keyboard-visualizer-ergonomic-indicator-toggle))
-      (?j (call-interactively 'keyboard-visualizer-learn-command-by-query))
+      (?e (setq keyboard-visualizer-ergonomic-indicator (not keyboard-visualizer-ergonomic-indicator)))
+      (?f (call-interactively 'keyboard-visualizer-learn-command-by-query))
       (?b (call-interactively 'keyboard-visualizer-insert-mode-toggle))
       (?n (call-interactively 'keyboard-visualizer-learning-step))
+      (?d (keyboard-visualizer-documentation-toggle))
       (?s (call-interactively 'keyboard-visualizer-save-layout))
       (?q (message "Quit Shell menu."))
       (?\C-g (message "Quit Shell menu."))
       (_ (message "Invalid key: %c" key)))))
 
-(global-set-key (kbd "C-c b") 'keyvis-menu)
-(global-set-key (kbd "M-c") 'keyboard-visualizer-learning-step)
+(global-set-key (kbd "C-c b") 'keyboard-visualizer-menu)
 
 (provide 'keyboard-visualizer)
-;;; keyboard-visualizer.el ends here
