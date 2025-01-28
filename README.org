@@ -42,6 +42,14 @@ My current inclination is for KeyViz.
 
 * Whats New
 
+** <2025-01-28>
+
+Added shift key and lambda function support
+
+- Add shift key mapping to properly visualize shifted characters (e.g., "!" -> "Shift-1")
+- Enhance command visualization to handle and display lambda functions
+- Improve documentation display to show lambda function definitions
+
 ** <2025-01-27>
 
 A major refactor and some functional improvements
